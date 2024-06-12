@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 import getpass
-#import subprocess
 import pexpect
-#import sys
+import datetime
+import time
+import threading
+import keyboard
 
 hostname = input('Enter the hostname: ')
 username = getpass.getpass('Enter username: ')
@@ -37,7 +39,22 @@ def rsync_with_password(local_path, remote_path, password):
     child.expect(pexpect.EOF)
     print(child.before.decode())
 
+stop_event = threading.Event()
 
-while True:
+def stop_button():
+    while True:
+        user_input = input("Enter 'stop' to stop: ")
+        if user_input.lower() == "stop":
+            stop_event.set()
+            break
+
+thread = threading.Thread(target=stop_button)
+thread.daemon = True
+thread.start()
+
+# while True:
+while not stop_event.is_set():
+    now = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    print(f'{now}: Synchronizing data from {local_file_path} to {remote_file_path}...')
     rsync_with_password(local_file_path, f'{username}@{hostname}:{remote_file_path}', password)
-    
+    time.sleep(1)
