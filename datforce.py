@@ -75,6 +75,7 @@ def rsync_with_password(local_path, remote_path, password):
     finally:
         child.close()
 
+
 def stop_button():
     while True:
         user_input = input("Enter 'stop' to stop: ")
