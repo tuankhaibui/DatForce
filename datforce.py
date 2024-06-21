@@ -4,6 +4,16 @@ import pexpect
 import datetime
 import time
 import threading
+import argparse
+
+
+parser = argparse.ArgumentParser(description='Synchronize data from local PC to a host computer')
+parser.add_argument('--update',
+                    action='store_true',
+                    help='if you need to update the directory')
+args = parser.parse_args()
+update_mode = args.update
+
 
 def progress_bar(duration):
     total_time = duration  # Total time in seconds
@@ -16,10 +26,10 @@ def progress_bar(duration):
         progress = min(progress, 100)  # Ensure progress does not exceed 100%
 
         # Print the progress bar
-        bar_length = 100
+        bar_length = 50
         filled_length = int(bar_length * progress / 100)
         bar = '=' * filled_length + ' ' * (bar_length - filled_length)
-        print(f'\rWaiting: [{bar}] {elapsed_time}/{total_time}[s]', end='', flush=True)
+        print(f'\rWaiting for next sync: [{bar}] {elapsed_time}/{total_time}[s]', end='', flush=True)
 
         # Wait for the update interval
         time.sleep(interval)
@@ -35,13 +45,18 @@ password = getpass.getpass('Enter password: ')
 
 local_file_path = input('Enter local file path: ') #'/mnt/md0/qup/h5data'
 remote_file_path = input('Enter remote file path: ') #'/group/cmb/kamioka/mKID/Ta-mKID/data/20240603_trigger_hdf5'
+if update_mode==True:
+    if remote_file_path[-1]!='/':
+        remote_file_path += '/'
+    if local_file_path[-1]!='/':
+        local_file_path[-1] += '/'
 
 print(f'Synchronize data from {local_file_path} in your computer to {remote_file_path} at {hostname}')
 
 
-def rsync_with_password(local_path, remote_path, password):
+def rsync_with_password(local_path, remote_path, password, update=False):
     # Construct the scp command
-    command = f'rsync -avr --progress --partial {local_path} {remote_path}'
+    command = f'rsync -avz --progress --partial --log-file=rsync.log {local_path} {remote_path}'
     print(command)
     # command = f"scp {local_path} {remote_path}"
 
